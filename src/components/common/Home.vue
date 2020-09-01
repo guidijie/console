@@ -45,7 +45,6 @@ export default {
                 msg[i].name && arr.push(msg[i].name);
             }
             this.tagsList = arr;
-            console.log(this.tagsList);
         });
     }
 };

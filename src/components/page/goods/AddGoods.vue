@@ -11,41 +11,79 @@
       :model="ruleForm"
       :rules="rules"
       ref="ruleForm"
+      drag="ture"
       label-width="100px"
       class="demo-ruleForm bgc"
     >
-      <el-form-item label="活动名称" prop="name">
+      <el-form-item label="课程名称" prop="name">
         <el-input v-model="ruleForm.name" style="width: 350px"></el-input>
       </el-form-item>
-      <el-form-item label="活动区域" prop="region">
-        <el-select v-model="ruleForm.region" placeholder="请选择活动区域">
-          <el-option label="区域一" value="shanghai"></el-option>
-          <el-option label="区域二" value="beijing"></el-option>
+
+      <el-form-item label="课程价格" prop="price">
+        <el-input
+          type="age"
+          v-model.number="ruleForm.price"
+          autocomplete="off"
+          style="width: 350px"
+        ></el-input>
+      </el-form-item>
+      <el-form-item label="课程优惠价格" prop="preferential">
+        <el-input
+          type="age"
+          v-model.number="ruleForm.preferential"
+          autocomplete="off"
+          style="width: 350px"
+        ></el-input>
+      </el-form-item>
+
+      <el-form-item label="商品图片" prop="goodsImg">
+        <el-upload
+          action
+          list-type="picture-card"
+          :limit="1"
+          :on-preview="handlePreview"
+          :on-remove="handleRemove"
+          :on-change="handleChange"
+          :auto-upload="false"
+        >
+          <i class="el-icon-plus"></i>
+        </el-upload>
+        <el-dialog width="50%" :visible.sync="dialogVisible" :title="previewName">
+          <iframe
+            :src="dialogImageUrl"
+            width="100%"
+            height="100%"
+            frameborder="1"
+            style="height: 540px;"
+          ></iframe>
+        </el-dialog>
+      </el-form-item>
+
+      <el-form-item label="课程级别" prop="grade">
+        <el-select v-model="ruleForm.grade" placeholder="请选择课程的等级">
+          <el-option label="入门" value="入门"></el-option>
+          <el-option label="进阶" value="进阶"></el-option>
+          <el-option label="大师" value="大师"></el-option>
         </el-select>
       </el-form-item>
 
-      <el-form-item label="即时配送" prop="delivery">
-        <el-switch v-model="ruleForm.delivery"></el-switch>
+      <el-form-item label="课程类别" prop="typeName">
+        <el-select v-model="ruleForm.typeName" placeholder="请选择课程的类别">
+          <el-option label="入门" value="入门"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="活动性质" prop="type">
-        <el-checkbox-group v-model="ruleForm.type">
-          <el-checkbox label="美食/餐厅线上活动" name="type"></el-checkbox>
-          <el-checkbox label="地推活动" name="type"></el-checkbox>
-          <el-checkbox label="线下主题活动" name="type"></el-checkbox>
-          <el-checkbox label="单纯品牌曝光" name="type"></el-checkbox>
-        </el-checkbox-group>
+
+      <el-form-item label="课程描述" prop="introduction">
+        <el-input type="textarea" v-model="ruleForm.introduction" :rows="6" style="width: 550px"></el-input>
       </el-form-item>
-      <el-form-item label="特殊资源" prop="resource">
-        <el-radio-group v-model="ruleForm.resource">
-          <el-radio label="线上品牌商赞助"></el-radio>
-          <el-radio label="线下场地免费"></el-radio>
-        </el-radio-group>
+      <el-form-item label="课程详细描述" prop="details">
+        <el-input type="textarea" v-model="ruleForm.details" :rows="8" style="width: 550px"></el-input>
       </el-form-item>
-      <el-form-item label="活动形式" prop="desc">
-        <el-input type="textarea" v-model="ruleForm.desc"></el-input>
+      <el-form-item label="课程目录" prop="directory">
+        <el-input type="textarea" v-model="ruleForm.directory" :rows="9" style="width: 550px"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm('ruleForm')">立即创建</el-button>
+        <el-button type="primary" @click="submit('ruleForm')">立即创建</el-button>
         <el-button @click="resetForm('ruleForm')">重置</el-button>
       </el-form-item>
     </el-form>
@@ -53,63 +91,105 @@
 </template>
 
 <script>
+import axios from "axios";
 export default {
   data() {
     return {
+      formData: new FormData(),
+      previewName: "",
+      dialogImageUrl: "",
+      uploadFile: {},
+      dialogVisible: false,
+      disabled: false,
+      fileList: [],
       ruleForm: {
         name: "",
-        region: "",
-        date1: "",
-        date2: "",
+        price: "",
+        preferential: "",
+        grade: "",
+        typeName: "",
+        introduction: "",
+        details: "",
+        directory: "",
         delivery: false,
-        type: [],
-        resource: "",
-        desc: ""
       },
+
       rules: {
         name: [
-          { required: true, message: "请输入活动名称", trigger: "blur" },
-          { min: 3, max: 5, message: "长度在 3 到 5 个字符", trigger: "blur" }
-        ],
-        region: [
-          { required: true, message: "请选择活动区域", trigger: "change" }
-        ],
-        date1: [
+          { required: true, message: "请输入商品课程名称", trigger: "change" },
           {
-            type: "date",
-            required: true,
-            message: "请选择日期",
-            trigger: "change"
-          }
+            min: 1,
+            max: 30,
+            message: "长度在 3 到 30 个字符",
+            trigger: "change",
+          },
         ],
-        date2: [
+        price: [
+          { required: true, message: "价格不能为空" },
+          { type: "number", message: "价格必须为数字值" },
+        ],
+        preferential: [
+          { required: true, message: "优惠价格不能为空，不打折写0" },
+          { type: "number", message: "价格必须为数字值" },
+        ],
+        grade: [
+          { required: true, message: "请选择商品的等级", trigger: "change" },
+        ],
+        typeName: [
           {
-            type: "date",
             required: true,
-            message: "请选择时间",
-            trigger: "change"
-          }
+            message: "请选择商品课程的类别",
+            trigger: "change",
+          },
         ],
-        type: [
+        introduction: [
+          { required: true, message: "商品描述不能为空", trigger: "change" },
+        ],
+        details: [
           {
-            type: "array",
             required: true,
-            message: "请至少选择一个活动性质",
-            trigger: "change"
-          }
+            message: "商品详细信息不能为空",
+            trigger: "change",
+          },
         ],
-        resource: [
-          { required: true, message: "请选择活动资源", trigger: "change" }
+        directory: [
+          {
+            required: true,
+            message: "请填写商品课程的目录",
+            trigger: "change",
+          },
         ],
-        desc: [{ required: true, message: "请填写活动形式", trigger: "blur" }]
-      }
+      },
     };
   },
   methods: {
-    submitForm(formName) {
-      this.$refs[formName].validate(valid => {
+
+    
+
+    submit(formName) {
+      this.$refs[formName].validate((valid) => {
         if (valid) {
-          alert("submit!");
+          console.log(this.uploadFile);
+          
+          this.formData.append("name", this.ruleForm.name);
+          this.formData.append("price", this.ruleForm.price);
+          this.formData.append("preferential", this.ruleForm.preferential);
+          this.formData.append("grade", this.ruleForm.grade);
+          this.formData.append("typeName", this.ruleForm.typeName);
+          this.formData.append("introduction", this.ruleForm.introduction);
+          this.formData.append("details", this.ruleForm.details);
+          this.formData.append("directory", this.ruleForm.directory);
+          this.formData.append("delivery", this.ruleForm.delivery);
+        
+          axios
+            .post("http://localhost:8080/xiazai", this.formData)
+            .then(function (response) {
+              // goods.goods = response;
+              console.log("成功");
+            })
+            .catch(function (error) {
+              console.log("错误");
+            });
         } else {
           console.log("error submit!!");
           return false;
@@ -118,13 +198,25 @@ export default {
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
-    }
-  }
+    },
+    handleChange(file, fileList) {
+      this.formData.append("file", file.raw);
+      this.uploadFile = file
+      this.dialogImageUrl = file.url
+    },
+    handleRemove(file, fileList) {
+      console.log(file, fileList);
+    },
+    handlePreview(file) {
+      this.dialogVisible = true;
+      this.dialogImageUrl = file.url;
+    },
+  },
 };
 </script>
 <style scoped>
- .bgc{
-     padding: 20px;
-     background-color: rgb(231, 231, 231);
- }
+.bgc {
+  padding: 20px;
+  background-color: rgb(231, 231, 231);
+}
 </style>

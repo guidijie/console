@@ -56,7 +56,7 @@
     </el-dialog>
 
     <div class="page">
-      <el-pagination background layout="prev, pager, next,jumper" :total="1000"></el-pagination>
+      <el-pagination background layout="prev, pager, next,jumper" :total="10" :page-size="2"></el-pagination>
     </div>
   </div>
 </template>
