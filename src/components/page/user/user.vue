@@ -8,14 +8,13 @@
       </el-breadcrumb>
     </div>
     <el-table :data="tableData" style="width: 100%">
-      <el-table-column label="用户id" prop="name"></el-table-column>
+      <el-table-column label="用户id" prop="userId"></el-table-column>
       <el-table-column label="角色" prop="name"></el-table-column>
-      <el-table-column label="账号" prop="name"></el-table-column>
-      <el-table-column label="密码" prop="name"></el-table-column>
-      <el-table-column label="余额" prop="name"></el-table-column>
-      <el-table-column label="头像地址" prop="name"></el-table-column>
-      <el-table-column label="邮箱" prop="name"></el-table-column>
-      <el-table-column label="电话" prop="name"></el-table-column>
+      <el-table-column label="账号" prop="userName"></el-table-column>
+      <el-table-column label="用户名" prop="name"></el-table-column>
+      <el-table-column label="余额" prop="money"></el-table-column>
+      <el-table-column label="邮箱" prop="email"></el-table-column>
+      <el-table-column label="电话" prop="phone"></el-table-column>
 
       <el-table-column align="right">
         <template slot="header">
@@ -29,7 +28,7 @@
     </el-table>
 
     <el-dialog title="修改用户信息" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
-      <el-form ref="form" :model="sizeForm" label-width="80px" size="mini">
+      <el-form ref="form" label-width="80px" size="mini">
         <el-form-item label="角色：">
           <el-select v-model="tableData.name" placeholder="角色">
             <el-option label="普通角色" value="shanghai"></el-option>
@@ -43,9 +42,6 @@
           <el-input v-model="tableData.name"></el-input>
         </el-form-item>
         <el-form-item label="余额：">
-          <el-input v-model="tableData.name"></el-input>
-        </el-form-item>
-        <el-form-item label="头像地址：">
           <el-input v-model="tableData.name"></el-input>
         </el-form-item>
       </el-form>
@@ -62,33 +58,14 @@
 </template>
 
 <script>
+import axios from "axios";
 export default {
   data() {
     return {
       dialogVisible: false,
       title: ["时间", "姓名", "地址"],
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄"
-        }
-      ],
+      sizeForm:"",
+      tableData: [],
       search: ""
     };
   },
@@ -106,8 +83,24 @@ export default {
           done();
         })
         .catch(_ => {});
+    },
+    getData(){
+      let then = this
+      axios
+            .get("http://localhost:8080/console/findByUser")
+            .then(function (response) {
+             then.tableData = response.data.data.users
+             console.log(then.tableData);
+            })
+            .catch(function (error) {
+              console.log("错误");
+            });
     }
+  },
+  created(){
+    this.getData()
   }
+  
 };
 </script>
 <style scoped>
