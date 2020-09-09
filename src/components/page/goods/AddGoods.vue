@@ -185,7 +185,9 @@ export default {
             .post("http://localhost:8080/xiazai", this.formData)
             .then(function (response) {
               // goods.goods = response;
-              console.log("成功");
+              // console.log("成功");
+              resetForm("ruleForm")
+              this.formData = new FormData();
             })
             .catch(function (error) {
               console.log("错误");

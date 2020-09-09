@@ -7,53 +7,176 @@
         </el-breadcrumb-item>
       </el-breadcrumb>
     </div>
-    <el-table :data="tableData" style="width: 100%">
-      <el-table-column label="用户id" prop="userId"></el-table-column>
+    <el-table :data="tableData">
+      <el-table-column label="用户id" prop="name"></el-table-column>
       <el-table-column label="角色" prop="name"></el-table-column>
-      <el-table-column label="账号" prop="userName"></el-table-column>
-      <el-table-column label="用户名" prop="name"></el-table-column>
-      <el-table-column label="余额" prop="money"></el-table-column>
-      <el-table-column label="邮箱" prop="email"></el-table-column>
-      <el-table-column label="电话" prop="phone"></el-table-column>
+      <el-table-column label="账号" prop="name"></el-table-column>
+      <el-table-column label="邮箱" prop="name"></el-table-column>
+      <el-table-column label="电话" prop="name"></el-table-column>
 
-      <el-table-column align="right">
+      <el-table-column align="right" width="400px">
         <template slot="header">
           <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />
         </template>
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+          <el-button size="mini" @click="onUpdateImage(scope.$index, scope.row)">更换头像</el-button>
+          <el-button size="mini" @click="handleEditChangeInfo(scope.$index, scope.row)">编辑资料</el-button>
+          <el-button size="mini" @click="handleEditChangePW(scope.$index, scope.row)">重置密码</el-button>
           <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog title="修改用户信息" :visible.sync="dialogVisible" width="30%" :before-close="handleClose">
-      <el-form ref="form" label-width="80px" size="mini">
-        <el-form-item label="角色：">
-          <el-select v-model="tableData.name" placeholder="角色">
-            <el-option label="普通角色" value="shanghai"></el-option>
-            <el-option label="超级管理员" value="beijing"></el-option>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="账号：">
-          <el-input v-model="tableData.name"></el-input>
-        </el-form-item>
-        <el-form-item label="密码：">
-          <el-input v-model="tableData.name"></el-input>
-        </el-form-item>
-        <el-form-item label="余额：">
-          <el-input v-model="tableData.name"></el-input>
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
-      </span>
-    </el-dialog>
-
     <div class="page">
       <el-pagination background layout="prev, pager, next,jumper" :total="10" :page-size="2"></el-pagination>
     </div>
+
+    <!-- 修改用户头像 -->
+    <el-dialog
+      title="修改用户头像"
+      :visible.sync="updateImageShow"
+      width="700px"
+      v-if="updateImageShow"
+    >
+      <el-form
+        ref="image"
+        :model="updateImage"
+        label-width="80px"
+        label-position="top"
+      >
+        <el-form-item label="上传图片">
+          <el-upload
+            action
+            list-type="picture-card"
+            :limit="1"
+            :on-preview="handleImagePreview"
+            :on-remove="handleImageRemove"
+            :on-change="handleImageChange"
+            :auto-upload="false"
+          >
+            <i class="el-icon-plus"></i>
+          </el-upload>
+          <el-dialog width="50%" :visible.sync="dialogVisible" :title="previewName">
+            <iframe
+              :src="dialogImageUrl"
+              width="100%"
+              height="100%"
+              frameborder="1"
+              style="height: 540px;"
+            ></iframe>
+          </el-dialog>
+        </el-form-item>
+
+        <el-form-item>
+        <el-button type="primary" @click="submitImage('image')">更换头像</el-button>
+        <el-button @click="resetImage('image')">重置</el-button>
+      </el-form-item>
+      </el-form>
+    </el-dialog>
+
+    <!-- 修改用户信息 -->
+    <el-dialog
+      title="修改用户信息"
+      :visible.sync="dialogFormChangeInfo"
+      width="700px"
+      v-if="dialogFormChangeInfo"
+    >
+      <el-form
+        ref="ruleFormChangeInfo"
+        :model="ruleFormChangeInfo"
+        label-width="80px"
+        label-position="right"
+      >
+        <el-form-item label="昵称">
+          <el-input v-model="ruleFormChangeInfo.name" style="width:250px;"></el-input>
+        </el-form-item>
+
+        <el-form-item label="角色">
+          <el-select v-model="ruleFormChangeInfo.region" style="width:250px;" placeholder="请选择活动区域">
+            <el-option label="超级管理员" value="shanghai"></el-option>
+            <el-option label="普通用户" value="beijing"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="生日">
+          <el-col :span="11">
+            <el-date-picker
+              type="date"
+              placeholder="选择日期"
+              v-model="ruleFormChangeInfo.birthday"
+              style="width: 100%;"
+            ></el-date-picker>
+          </el-col>
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="ruleFormChangeInfo.email" style="width:250px;"></el-input>
+        </el-form-item>
+        <el-form-item label="手机">
+          <el-input v-model="ruleFormChangeInfo.phone" style="width:250px;"></el-input>
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-radio-group v-model="ruleFormChangeInfo.sex">
+            <el-radio label="男"></el-radio>
+            <el-radio label="女"></el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="个性签名">
+          <el-input type="textarea" :rows="6" v-model="ruleFormChangeInfo.individuality_signature"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="submitFormChangeInfo('ruleFormChangeInfo')">立即创建</el-button>
+          <el-button>取消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+
+    <!-- 修改密码弹窗 -->
+    <el-dialog
+      title="修密码"
+      :visible.sync="dialogFormChangePW"
+      width="700px"
+      v-if="dialogFormChangePW"
+      @close="closeFun()"
+    >
+      <el-form
+        status-icon
+        :rules="rulesChangePW"
+        label-width="100px"
+        class="demo-ruleForm"
+        :model="ruleFormChangePW"
+        ref="ruleFormChangePW"
+      >
+        <el-form-item label="账号">
+          <el-input
+            :placeholder="ruleFormChangePW.user"
+            style="width:250px"
+            v-model="ruleFormChangePW.user"
+            :disabled="true"
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="密码" prop="pass">
+          <el-input
+            type="password"
+            style="width:300px"
+            v-model="ruleFormChangePW.pass"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="checkPass">
+          <el-input
+            type="password"
+            style="width:300px"
+            v-model="ruleFormChangePW.checkPass"
+            autocomplete="off"
+          ></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="submitFormChangePW('ruleFormChangePW')">提交</el-button>
+          <el-button @click="resetFormChangePW('ruleFormChangePW')">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
@@ -61,46 +184,169 @@
 import axios from "axios";
 export default {
   data() {
+    let checkAge = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("年龄不能为空"));
+      }
+      setTimeout(() => {
+        if (!Number.isInteger(value)) {
+          callback(new Error("请输入数字值"));
+        } else {
+          if (value < 18) {
+            callback(new Error("必须年满18岁"));
+          } else {
+            callback();
+          }
+        }
+      }, 1000);
+    };
+    let validatePass = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请输入密码"));
+      } else {
+        if (this.ruleFormChangePW.checkPass !== "") {
+          this.$refs.ruleFormChangePW.validateField("checkPass");
+        }
+        callback();
+      }
+    };
+    let validatePass2 = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请再次输入密码"));
+      } else if (value !== this.ruleFormChangePW.pass) {
+        callback(new Error("两次输入密码不一致!"));
+      } else {
+        callback();
+      }
+    };
+
     return {
       dialogVisible: false,
       title: ["时间", "姓名", "地址"],
-      sizeForm:"",
-      tableData: [],
-      search: ""
+      sizeForm: "",
+      tableData: [{ name: "jie" }, { name: "ming" }],
+      search: "",
+      dialogFormChangePW: false,
+      dialogFormChangeInfo: false,
+      ruleFormChangePW: {
+        user: "",
+        pass: "",
+        checkPass: "",
+      },
+      ruleFormChangeInfo: {
+        name: "",
+        birthday: "",
+        email: "",
+        phone: "",
+        sex: "",
+        individuality_signature: "",
+        region: "",
+      },
+      rulesChangePW: {
+        pass: [{ validator: validatePass, trigger: "blur" }],
+        checkPass: [{ validator: validatePass2, trigger: "blur" }],
+      },
+
+      formData:new FormData(),
+      updateImageShow:false,
+      previewName: "",
+      dialogImageUrl: "",
+      updateImage:{
+
+      }
     };
   },
   methods: {
-    handleEdit(index, row) {
-      // console.log(index, row);
-      this.dialogVisible = true;
+    onUpdateImage(index,row){
+      this.updateImageShow = true
+    },
+    submitFormChangePW(formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          alert("submit!");
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    resetFormChangePW(formName) {
+      this.$refs[formName].resetFields();
+    },
+    handleEditChangeInfo(index, row) {
+      this.dialogFormChangeInfo = true;
+    },
+    handleEditChangePW(index, row) {
+      this.ruleFormChangePW.user = row.name;
+      this.dialogFormChangePW = true;
     },
     handleDelete(index, row) {
       console.log(index, row);
     },
-    handleClose(done) {
-      this.$confirm("确认关闭？")
-        .then(_ => {
-          done();
-        })
-        .catch(_ => {});
+    closeFun() {
+      this.ruleFormChangePW.pass = "";
+      this.ruleFormChangePW.checkPass = "";
     },
-    getData(){
+
+    submitFormChangeInfo(formName) {
+      alert("submit!");
+      console.log(this.$refs[formName].model);
+    },
+
+   //图片上传相关
+    handleImageChange(file, fileList) {
+      this.formData.append("file", file.raw);
+      this.uploadFile = file
+      this.dialogImageUrl = file.url
+    },
+    handleImageRemove(file, fileList) {
+      console.log(file, fileList);
+    },
+    handleImagePreview(file) {
+      this.dialogVisible = true;
+      this.dialogImageUrl = file.url;
+    },
+    submitImage(){
       let then = this
-      axios
-            .get("http://localhost:8080/console/findByUser")
-            .then(function (response) {
-             then.tableData = response.data.data.users
-             console.log(then.tableData);
-            })
-            .catch(function (error) {
-              console.log("错误");
-            });
-    }
+      this.$refs[formName].validate((valid) => {
+        if (valid) { 
+          // let formData =new FormData()
+          // axios
+          //   .post("http://localhost:8080/xiazai", this.formData)
+          //   .then(function (response) {
+          //     // goods.goods = response;
+          //     // console.log("成功");
+          //     resetForm("ruleForm")
+          //   })
+          //   .catch(function (error) {
+          //     console.log("错误");
+          //   });
+          then.formData.delete("file")
+        } else {
+          console.log("error submit!!");
+          return false;
+        }
+      });
+    },
+    getData() {
+      // let then = this;
+      // axios
+      //   .get("http://localhost:8080/console/findByUser")
+      //   .then(function (response) {
+      //     then.tableData = response.data.data.users;
+      //     for (let item of then.tableData) {
+      //       item.money = "￥" + item.money + ".00";
+      //     }
+      //     console.log(then.tableData);
+      //   })
+      //   .catch(function (error) {
+      //     console.log("错误");
+      //   });
+    },
   },
-  created(){
-    this.getData()
-  }
-  
+  created() {
+    this.getData();
+  },
 };
 </script>
 <style scoped>
