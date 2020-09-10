@@ -8,11 +8,11 @@
       </el-breadcrumb>
     </div>
     <el-table :data="tableData">
-      <el-table-column label="用户id" prop="name"></el-table-column>
+      <el-table-column label="用户id" prop="userId"></el-table-column>
       <el-table-column label="角色" prop="name"></el-table-column>
-      <el-table-column label="账号" prop="name"></el-table-column>
-      <el-table-column label="邮箱" prop="name"></el-table-column>
-      <el-table-column label="电话" prop="name"></el-table-column>
+      <el-table-column label="账号" prop="userName"></el-table-column>
+      <el-table-column label="邮箱" prop="email"></el-table-column>
+      <el-table-column label="电话" prop="phone"></el-table-column>
 
       <el-table-column align="right" width="400px">
         <template slot="header">
@@ -28,22 +28,19 @@
     </el-table>
 
     <div class="page">
-      <el-pagination background layout="prev, pager, next,jumper" :total="10" :page-size="2"></el-pagination>
+      <el-pagination
+        background
+        layout="prev, pager, next,jumper"
+        
+        @current-change="currentChange"
+        :total="pageTotal"
+        :page-size="20"
+      ></el-pagination>
     </div>
 
     <!-- 修改用户头像 -->
-    <el-dialog
-      title="修改用户头像"
-      :visible.sync="updateImageShow"
-      width="700px"
-      v-if="updateImageShow"
-    >
-      <el-form
-        ref="image"
-        :model="updateImage"
-        label-width="80px"
-        label-position="top"
-      >
+    <el-dialog title="修改用户头像" :visible.sync="updateImageShow" width="700px" v-if="updateImageShow">
+      <el-form ref="image" :model="updateImage" label-width="80px" label-position="top">
         <el-form-item label="上传图片">
           <el-upload
             action
@@ -68,9 +65,9 @@
         </el-form-item>
 
         <el-form-item>
-        <el-button type="primary" @click="submitImage('image')">更换头像</el-button>
-        <el-button @click="resetImage('image')">重置</el-button>
-      </el-form-item>
+          <el-button type="primary" @click="submitImage('image')">更换头像</el-button>
+          <el-button @click="resetImage('image')">重置</el-button>
+        </el-form-item>
       </el-form>
     </el-dialog>
 
@@ -88,7 +85,11 @@
         label-position="right"
       >
         <el-form-item label="昵称">
-          <el-input v-model="ruleFormChangeInfo.name" style="width:250px;"></el-input>
+          <el-input
+            v-model="ruleFormChangeInfo.name"
+            style="width:250px;"
+            :placeholder="userInfo.name"
+          ></el-input>
         </el-form-item>
 
         <el-form-item label="角色">
@@ -102,17 +103,25 @@
           <el-col :span="11">
             <el-date-picker
               type="date"
-              placeholder="选择日期"
+              :placeholder="userInfo.birthday"
               v-model="ruleFormChangeInfo.birthday"
               style="width: 100%;"
             ></el-date-picker>
           </el-col>
         </el-form-item>
         <el-form-item label="邮箱">
-          <el-input v-model="ruleFormChangeInfo.email" style="width:250px;"></el-input>
+          <el-input
+            v-model="ruleFormChangeInfo.email"
+            style="width:250px;"
+            :placeholder="userInfo.email"
+          ></el-input>
         </el-form-item>
         <el-form-item label="手机">
-          <el-input v-model="ruleFormChangeInfo.phone" style="width:250px;"></el-input>
+          <el-input
+            v-model="ruleFormChangeInfo.phone"
+            style="width:250px;"
+            :placeholder="userInfo.phone"
+          ></el-input>
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="ruleFormChangeInfo.sex">
@@ -121,7 +130,12 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="个性签名">
-          <el-input type="textarea" :rows="6" v-model="ruleFormChangeInfo.individuality_signature"></el-input>
+          <el-input
+            type="textarea"
+            :rows="6"
+            v-model="ruleFormChangeInfo.individuality_signature"
+            :placeholder="userInfo.individualitySignature"
+          ></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="submitFormChangeInfo('ruleFormChangeInfo')">立即创建</el-button>
@@ -222,9 +236,7 @@ export default {
 
     return {
       dialogVisible: false,
-      title: ["时间", "姓名", "地址"],
-      sizeForm: "",
-      tableData: [{ name: "jie" }, { name: "ming" }],
+      tableData: [],
       search: "",
       dialogFormChangePW: false,
       dialogFormChangeInfo: false,
@@ -233,6 +245,7 @@ export default {
         pass: "",
         checkPass: "",
       },
+      userInfo: {},
       ruleFormChangeInfo: {
         name: "",
         birthday: "",
@@ -240,25 +253,24 @@ export default {
         phone: "",
         sex: "",
         individuality_signature: "",
-        region: "",
+        juese: "",
       },
       rulesChangePW: {
         pass: [{ validator: validatePass, trigger: "blur" }],
         checkPass: [{ validator: validatePass2, trigger: "blur" }],
       },
 
-      formData:new FormData(),
-      updateImageShow:false,
+      formData: new FormData(),
+      updateImageShow: false,
       previewName: "",
       dialogImageUrl: "",
-      updateImage:{
-
-      }
+      updateImage: {},
+      pageTotal:0
     };
   },
   methods: {
-    onUpdateImage(index,row){
-      this.updateImageShow = true
+    onUpdateImage(index, row) {
+      this.updateImageShow = true;
     },
     submitFormChangePW(formName) {
       this.$refs[formName].validate((valid) => {
@@ -275,6 +287,12 @@ export default {
     },
     handleEditChangeInfo(index, row) {
       this.dialogFormChangeInfo = true;
+      this.userInfo = row;
+      if (row.sex === 0) {
+        this.ruleFormChangeInfo.sex = "女";
+      } else if (row.sex === 1) {
+        this.ruleFormChangeInfo.sex = "男";
+      }
     },
     handleEditChangePW(index, row) {
       this.ruleFormChangePW.user = row.name;
@@ -293,11 +311,11 @@ export default {
       console.log(this.$refs[formName].model);
     },
 
-   //图片上传相关
+    //图片上传相关
     handleImageChange(file, fileList) {
       this.formData.append("file", file.raw);
-      this.uploadFile = file
-      this.dialogImageUrl = file.url
+      this.uploadFile = file;
+      this.dialogImageUrl = file.url;
     },
     handleImageRemove(file, fileList) {
       console.log(file, fileList);
@@ -306,10 +324,10 @@ export default {
       this.dialogVisible = true;
       this.dialogImageUrl = file.url;
     },
-    submitImage(){
-      let then = this
+    submitImage() {
+      let then = this;
       this.$refs[formName].validate((valid) => {
-        if (valid) { 
+        if (valid) {
           // let formData =new FormData()
           // axios
           //   .post("http://localhost:8080/xiazai", this.formData)
@@ -321,31 +339,37 @@ export default {
           //   .catch(function (error) {
           //     console.log("错误");
           //   });
-          then.formData.delete("file")
+          then.formData.delete("file");
         } else {
           console.log("error submit!!");
           return false;
         }
       });
     },
-    getData() {
-      // let then = this;
-      // axios
-      //   .get("http://localhost:8080/console/findByUser")
-      //   .then(function (response) {
-      //     then.tableData = response.data.data.users;
-      //     for (let item of then.tableData) {
-      //       item.money = "￥" + item.money + ".00";
-      //     }
-      //     console.log(then.tableData);
-      //   })
-      //   .catch(function (error) {
-      //     console.log("错误");
-      //   });
+
+    // 分页
+    currentChange(val){
+      this.$options.methods.getData(val)
+    },
+    getData(pageNum) {
+      let then = this;
+      axios
+        .get("http://localhost:8080/console/findByUser/"+pageNum)
+        .then(function (response) {
+          then.tableData = response.data.data.users.users;
+          then.pageTotal = response.data.data.users.page.total
+          for (let item of then.tableData) {
+            item.money = "￥" + item.money + ".00";
+          }
+          console.log(then.tableData);
+        })
+        .catch(function (error) {
+          console.log("错误");
+        });
     },
   },
   created() {
-    this.getData();
+    this.getData(1);
   },
 };
 </script>
