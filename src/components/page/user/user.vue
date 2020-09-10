@@ -235,18 +235,18 @@ export default {
     };
 
     return {
-      dialogVisible: false,
-      tableData: [],
+      dialogVisible: false,   //预览图片
+      tableData: [],  //用户数据
       search: "",
-      dialogFormChangePW: false,
-      dialogFormChangeInfo: false,
-      ruleFormChangePW: {
+      dialogFormChangePW: false,  //显示修改密码页
+      dialogFormChangeInfo: false,  //显示修改用户数据页
+      ruleFormChangePW: {  //修改后密码表单
         user: "",
         pass: "",
         checkPass: "",
       },
       userInfo: {},
-      ruleFormChangeInfo: {
+      ruleFormChangeInfo: {   //修改用户信息后表单
         name: "",
         birthday: "",
         email: "",
@@ -255,23 +255,24 @@ export default {
         individuality_signature: "",
         juese: "",
       },
-      rulesChangePW: {
+      rulesChangePW: {   //密码验证
         pass: [{ validator: validatePass, trigger: "blur" }],
         checkPass: [{ validator: validatePass2, trigger: "blur" }],
       },
 
+      //上传图片相关
       formData: new FormData(),
-      updateImageShow: false,
+      updateImageShow: false,  //显示上传图片页
       previewName: "",
       dialogImageUrl: "",
       updateImage: {},
-      pageTotal:0
+
+
+      pageTotal:0  //分页总数
     };
   },
   methods: {
-    onUpdateImage(index, row) {
-      this.updateImageShow = true;
-    },
+    // 重置密码方法
     submitFormChangePW(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
@@ -282,9 +283,17 @@ export default {
         }
       });
     },
-    resetFormChangePW(formName) {
-      this.$refs[formName].resetFields();
+    handleEditChangePW(index, row) {
+      this.ruleFormChangePW.user = row.name;
+      this.dialogFormChangePW = true;
     },
+    closeFun() {
+      this.ruleFormChangePW.pass = "";
+      this.ruleFormChangePW.checkPass = "";
+    },
+
+    
+    //修改用户资料
     handleEditChangeInfo(index, row) {
       this.dialogFormChangeInfo = true;
       this.userInfo = row;
@@ -294,24 +303,23 @@ export default {
         this.ruleFormChangeInfo.sex = "男";
       }
     },
-    handleEditChangePW(index, row) {
-      this.ruleFormChangePW.user = row.name;
-      this.dialogFormChangePW = true;
-    },
-    handleDelete(index, row) {
-      console.log(index, row);
-    },
-    closeFun() {
-      this.ruleFormChangePW.pass = "";
-      this.ruleFormChangePW.checkPass = "";
-    },
-
     submitFormChangeInfo(formName) {
       alert("submit!");
       console.log(this.$refs[formName].model);
     },
+    
 
+    //删除用户
+    handleDelete(index, row) {
+      console.log(index, row);
+    },
+    
+
+  
     //图片上传相关
+    onUpdateImage(index, row) {
+      this.updateImageShow = true;
+    },
     handleImageChange(file, fileList) {
       this.formData.append("file", file.raw);
       this.uploadFile = file;
@@ -349,8 +357,23 @@ export default {
 
     // 分页
     currentChange(val){
-      this.$options.methods.getData(val)
+      let then = this;
+      axios
+        .get("http://localhost:8080/console/findByUser/"+val)
+        .then(function (response) {
+          then.tableData = response.data.data.users.users;
+          then.pageTotal = response.data.data.users.page.total
+          for (let item of then.tableData) {
+            item.money = "￥" + item.money + ".00";
+          }
+          console.log(then.tableData);
+        })
+        .catch(function (error) {
+          console.log("错误");
+        });
     },
+
+    //获取数据
     getData(pageNum) {
       let then = this;
       axios
