@@ -67,9 +67,9 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="课程类别" prop="typeName">
-        <el-select v-model="ruleForm.typeName" placeholder="请选择课程的类别">
-          <el-option label="入门" value="入门"></el-option>
+      <el-form-item label="课程类别" prop="goodsTypeId">
+        <el-select v-model="ruleForm.goodsTypeId" placeholder="请选择课程的类别">
+          <el-option :label="item.typeName" :value="item.id" :key="item.id" v-for="item of goodsType"></el-option>
         </el-select>
       </el-form-item>
 
@@ -95,6 +95,8 @@ import axios from "axios";
 export default {
   data() {
     return {
+      goodsType:[],
+
       formData: new FormData(),
       previewName: "",
       dialogImageUrl: "",
@@ -107,11 +109,11 @@ export default {
         price: "",
         preferential: "",
         grade: "",
-        typeName: "",
+        goodsTypeId:'',
         introduction: "",
         details: "",
         directory: "",
-        delivery: false,
+        
       },
 
       rules: {
@@ -135,7 +137,7 @@ export default {
         grade: [
           { required: true, message: "请选择商品的等级", trigger: "change" },
         ],
-        typeName: [
+        goodsTypeId: [
           {
             required: true,
             message: "请选择商品课程的类别",
@@ -175,23 +177,33 @@ export default {
           this.formData.append("price", this.ruleForm.price);
           this.formData.append("preferential", this.ruleForm.preferential);
           this.formData.append("grade", this.ruleForm.grade);
-          this.formData.append("typeName", this.ruleForm.typeName);
+          this.formData.append("goodsTypeId", this.ruleForm.goodsTypeId);
           this.formData.append("introduction", this.ruleForm.introduction);
           this.formData.append("details", this.ruleForm.details);
           this.formData.append("directory", this.ruleForm.directory);
-          this.formData.append("delivery", this.ruleForm.delivery);
         
+          console.log();
           axios
-            .post("http://localhost:8080/xiazai", this.formData)
+            .post("http://localhost:8080/goods/addGoods", this.formData)
             .then(function (response) {
               // goods.goods = response;
               // console.log("成功");
-              resetForm("ruleForm")
+              this.$options.methods.resetForm("ruleForm")
               this.formData = new FormData();
             })
             .catch(function (error) {
               console.log("错误");
             });
+
+            // this.ruleForm.name = ""
+            // this.ruleForm.price = ""
+            // this.ruleForm.preferential = ""
+            // this.ruleForm.grade = ""
+            // this.ruleForm.typeName = ""
+            // this.ruleForm.introduction = ""
+            // this.ruleForm.details = ""
+            // this.ruleForm.directory = ""
+
         } else {
           console.log("error submit!!");
           return false;
@@ -213,6 +225,22 @@ export default {
       this.dialogVisible = true;
       this.dialogImageUrl = file.url;
     },
+
+    getData(){
+      let then = this
+      axios
+            .get("http://localhost:8080/goods/findGoodsTypeAll")
+            .then(function (response) {
+              then.goodsType = response.data.data.goodsType
+              console.log(then.goodsType);
+            })
+            .catch(function (error) {
+              console.log("错误");
+            });
+    }
+  },
+  created() {
+    this.getData();
   },
 };
 </script>

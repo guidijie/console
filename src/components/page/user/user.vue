@@ -22,7 +22,10 @@
           <el-button size="mini" @click="onUpdateImage(scope.$index, scope.row)">更换头像</el-button>
           <el-button size="mini" @click="handleEditChangeInfo(scope.$index, scope.row)">编辑资料</el-button>
           <el-button size="mini" @click="handleEditChangePW(scope.$index, scope.row)">重置密码</el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+          <!-- <el-button size="mini" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button> -->
+          <el-popconfirm title="这是一段内容确定删除吗？" @onConfirm="handleDelete(scope.$index, scope.row)">
+            <el-button size="mini" type="danger" slot="reference" style="margin-left: 10px;">删除</el-button>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
@@ -31,7 +34,6 @@
       <el-pagination
         background
         layout="prev, pager, next,jumper"
-        
         @current-change="currentChange"
         :total="pageTotal"
         :page-size="20"
@@ -93,9 +95,12 @@
         </el-form-item>
 
         <el-form-item label="角色">
-          <el-select v-model="ruleFormChangeInfo.region" style="width:250px;" placeholder="请选择活动区域">
-            <el-option label="超级管理员" value="shanghai"></el-option>
-            <el-option label="普通用户" value="beijing"></el-option>
+          <el-select
+            v-model="ruleFormChangeInfo.role"
+            style="width:250px;"
+            :placeholder="userInfo.role"
+          >
+            <el-option :key="item.role" v-for="item in roles" :label="item.role" :value="item.role"></el-option>
           </el-select>
         </el-form-item>
 
@@ -235,40 +240,47 @@ export default {
     };
 
     return {
-      dialogVisible: false,   //预览图片
-      tableData: [],  //用户数据
+      dialogVisible: false, //预览图片
+      tableData: [], //用户数据
       search: "",
-      dialogFormChangePW: false,  //显示修改密码页
-      dialogFormChangeInfo: false,  //显示修改用户数据页
-      ruleFormChangePW: {  //修改后密码表单
+      dialogFormChangePW: false, //显示修改密码页
+      dialogFormChangeInfo: false, //显示修改用户数据页
+      ruleFormChangePW: {
+        //修改后密码表单
+        id: "",
         user: "",
         pass: "",
         checkPass: "",
       },
       userInfo: {},
-      ruleFormChangeInfo: {   //修改用户信息后表单
+      roles: {},
+      ruleFormChangeInfo: {
+        //修改用户信息后表单
+        id: "",
+        userId: "",
         name: "",
         birthday: "",
         email: "",
         phone: "",
         sex: "",
         individuality_signature: "",
-        juese: "",
+        role: "",
       },
-      rulesChangePW: {   //密码验证
+      rulesChangePW: {
+        //密码验证
         pass: [{ validator: validatePass, trigger: "blur" }],
         checkPass: [{ validator: validatePass2, trigger: "blur" }],
       },
 
       //上传图片相关
-      formData: new FormData(),
-      updateImageShow: false,  //显示上传图片页
+      formDataImage: new FormData(),
+      updateImageShow: false, //显示上传图片页
       previewName: "",
       dialogImageUrl: "",
+      uploadUserId: 0,
       updateImage: {},
 
-
-      pageTotal:0  //分页总数
+      pageTotal: 0, //分页总数
     };
   },
   methods: {
@@ -276,15 +288,32 @@ export default {
     submitFormChangePW(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          alert("submit!");
+          let then = this;
+          let a = {
+            id: then.ruleFormChangePW.id,
+            userName: then.ruleFormChangePW.user,
+            password: then.ruleFormChangePW.pass,
+          };
+          console.log(a);
+          axios
+            .post("http://localhost:8080/console/changePW", a)
+            .then(function (response) {
+              then.ruleFormChangePW.pass = "";
+              then.ruleFormChangePW.checkPass = "";
+              alert("修改密码成功");
+            })
+            .catch(function (error) {
+              alert("修改密码失败");
+            });
         } else {
-          console.log("error submit!!");
+          alert("error submit!!");
           return false;
         }
       });
     },
     handleEditChangePW(index, row) {
       this.ruleFormChangePW.user = row.name;
+      this.ruleFormChangePW.id = row.userId;
       this.dialogFormChangePW = true;
     },
     closeFun() {
@@ -292,7 +321,6 @@ export default {
       this.ruleFormChangePW.checkPass = "";
     },
 
-    
     //修改用户资料
     handleEditChangeInfo(index, row) {
       this.dialogFormChangeInfo = true;
@@ -302,67 +330,120 @@ export default {
       } else if (row.sex === 1) {
         this.ruleFormChangeInfo.sex = "男";
       }
+
+      this.ruleFormChangeInfo.userId = row.userId;
+      this.ruleFormChangeInfo.id = row.id;
+
+      let then = this;
+      axios
+        .get("http://localhost:8080/role/findAllRole")
+        .then(function (response) {
+          then.roles = response.data.data.roles;
+          console.log(then.roles);
+        })
+        .catch(function (error) {
+          console.log("错误");
+        });
     },
     submitFormChangeInfo(formName) {
-      alert("submit!");
-      console.log(this.$refs[formName].model);
+      let then = this;
+      if (this.ruleFormChangeInfo.sex === "女") {
+        this.ruleFormChangeInfo.sex = 0;
+      } else if ((this.ruleFormChangeInfo.sex = "男")) {
+        this.ruleFormChangeInfo.sex = 1;
+      }
+      axios
+        .post(
+          "http://localhost:8080/console/updateUserInfo",
+          then.ruleFormChangeInfo
+        )
+        .then(function (response) {
+          then.roles = response.data.data.roles;
+          console.log(then.roles);
+          alert(response.data.data.msg);
+          // then.ruleFormChangeInfo = {}
+        })
+        .catch(function (error) {
+          console.log("错误");
+        });
+
+      // alert("submit!");
+      // console.log(this.$refs[formName].model);
     },
-    
 
     //删除用户
     handleDelete(index, row) {
+      let then = this;
       console.log(index, row);
+      axios
+        .get("http://localhost:8080/console/deleteUser/" + row.userId)
+        .then(function (response) {
+          alert(response.data.data.msg);
+          then.tableData.splice(index, 1);
+        })
+        .catch(function (error) {
+          console.log("错误");
+        });
     },
-    
 
-  
     //图片上传相关
     onUpdateImage(index, row) {
       this.updateImageShow = true;
+      this.uploadUserId = row.userId;
+      console.log(this.uploadUserId);
     },
     handleImageChange(file, fileList) {
-      this.formData.append("file", file.raw);
+      this.formDataImage.append("fileImage", file.raw);
       this.uploadFile = file;
       this.dialogImageUrl = file.url;
     },
     handleImageRemove(file, fileList) {
-      console.log(file, fileList);
     },
     handleImagePreview(file) {
       this.dialogVisible = true;
       this.dialogImageUrl = file.url;
     },
-    submitImage() {
-      let then = this;
+    resetImage(formName){
+      this.$refs[formName].validate((valid) => {
+        if (valid) { 
+          this.uploadFile ="";
+          this.dialogImageUrl = "";
+          this.uploadUserId = 0
+          this.formDataImage = new FormData()
+        }
+      });
+    },
+    submitImage(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          // let formData =new FormData()
-          // axios
-          //   .post("http://localhost:8080/xiazai", this.formData)
-          //   .then(function (response) {
-          //     // goods.goods = response;
-          //     // console.log("成功");
-          //     resetForm("ruleForm")
-          //   })
-          //   .catch(function (error) {
-          //     console.log("错误");
-          //   });
-          then.formData.delete("file");
-        } else {
-          console.log("error submit!!");
-          return false;
+          let then = this;
+          then.formDataImage.append("userId", this.uploadUserId);
+          axios
+            .post(
+              "http://localhost:8080/console/uploadUserImg",
+              then.formDataImage
+            )
+            .then(function (response) {
+              // goods.goods = response;
+              // console.log("成功");
+              alert("修改成功");
+              then.formDataImage = new FormData();
+            })
+            .catch(function (error) {
+              console.log("错误");
+            });
         }
       });
     },
 
     // 分页
-    currentChange(val){
+    currentChange(val) {
       let then = this;
       axios
-        .get("http://localhost:8080/console/findByUser/"+val)
+        .get("http://localhost:8080/console/findByUser/" + val)
         .then(function (response) {
           then.tableData = response.data.data.users.users;
-          then.pageTotal = response.data.data.users.page.total
+          then.pageTotal = response.data.data.users.page.total;
           for (let item of then.tableData) {
             item.money = "￥" + item.money + ".00";
           }
@@ -377,14 +458,13 @@ export default {
     getData(pageNum) {
       let then = this;
       axios
-        .get("http://localhost:8080/console/findByUser/"+pageNum)
+        .get("http://localhost:8080/console/findByUser/" + pageNum)
         .then(function (response) {
           then.tableData = response.data.data.users.users;
-          then.pageTotal = response.data.data.users.page.total
+          then.pageTotal = response.data.data.users.page.total;
           for (let item of then.tableData) {
             item.money = "￥" + item.money + ".00";
           }
-          console.log(then.tableData);
         })
         .catch(function (error) {
           console.log("错误");
