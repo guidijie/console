@@ -177,7 +177,7 @@ export default {
           this.formData.append("price", this.ruleForm.price);
           this.formData.append("preferential", this.ruleForm.preferential);
           this.formData.append("grade", this.ruleForm.grade);
-          this.formData.append("goodsTypeId", this.ruleForm.goodsTypeId);
+          this.formData.append("goodsTypeId", this.ruleForm.goodsTypeId );
           this.formData.append("introduction", this.ruleForm.introduction);
           this.formData.append("details", this.ruleForm.details);
           this.formData.append("directory", this.ruleForm.directory);
@@ -186,8 +186,7 @@ export default {
           axios
             .post("http://localhost:8080/goods/addGoods", this.formData)
             .then(function (response) {
-              // goods.goods = response;
-              // console.log("成功");
+              alert(response.data.data.msg)
               this.$options.methods.resetForm("ruleForm")
               this.formData = new FormData();
             })

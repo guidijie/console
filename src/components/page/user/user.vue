@@ -9,7 +9,7 @@
     </div>
     <el-table :data="tableData">
       <el-table-column label="用户id" prop="userId"></el-table-column>
-      <el-table-column label="角色" prop="name"></el-table-column>
+      <el-table-column label="角色" prop="role"></el-table-column>
       <el-table-column label="账号" prop="userName"></el-table-column>
       <el-table-column label="邮箱" prop="email"></el-table-column>
       <el-table-column label="电话" prop="phone"></el-table-column>
@@ -36,7 +36,8 @@
         layout="prev, pager, next,jumper"
         @current-change="currentChange"
         :total="pageTotal"
-        :page-size="20"
+        :page-size="15"
+        style="text-align: center; "
       ></el-pagination>
     </div>
 
@@ -461,6 +462,7 @@ export default {
         .get("http://localhost:8080/console/findByUser/" + pageNum)
         .then(function (response) {
           then.tableData = response.data.data.users.users;
+          console.log(then.tableData );
           then.pageTotal = response.data.data.users.page.total;
           for (let item of then.tableData) {
             item.money = "￥" + item.money + ".00";
@@ -478,7 +480,7 @@ export default {
 </script>
 <style scoped>
 .page {
-  padding-left: 33%;
+  /* padding-left: 33%; */
   padding-top: 8px;
   margin-top: 30px;
   height: 40px;

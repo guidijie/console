@@ -52,6 +52,19 @@ export default new Router({
                     path: '/addgoods',
                     component: () => import(/* webpackChunkName: "addgoods" */ '../components/page/goods/AddGoods.vue'),
                     meta: { title: '新增商品' }
+                },
+                {
+                    //商品类别管理
+                    path: '/goodsType',
+                    component: () => import(/* webpackChunkName: "addgoods" */ '../components/page/goods/GoodsType.vue'),
+                    meta: { title: '商品类别管理' }
+                }
+                ,
+                {
+                    //所有商品
+                    path: '/goodsAll',
+                    component: () => import(/* webpackChunkName: "addgoods" */ '../components/page/goods/GoodsAll.vue'),
+                    meta: { title: '所有商品' }
                 }
             ]
         },

@@ -76,7 +76,11 @@ export default {
                             title: '新增商品'
                         },
                         {
-                            index: 'goods',
+                            index: 'goodsType',
+                            title: '类别管理'
+                        },
+                        {
+                            index: 'goodsAll',
                             title: '所有商品'
                         }
                     ]
